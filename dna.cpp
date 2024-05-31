@@ -5,321 +5,244 @@
 #include <list>
 #include <cstdio>
 #include <cmath>
+#include <regex>
+#include <chrono> 
 
 //OPENMP
-#include <chrono> 
 #include <omp.h>
 
 using namespace std;
+using namespace std::chrono;
 
-//DNA(3'->5') => RNA(5'->3')
+//TRANSKRYPCJA (DNA -> RNA)
 string transcription(string dna){
   string rna;
   int len = dna.length();
   vector<string> acids(len);
   
-  #pragma omp parallel for
   for(int i = 0; i < len; i++){
-
     //A-U
     if(dna[i] == 'A'){
-        acids[i] = 'U';
+      acids[i] = 'U';
     }
     //T-A
     else if(dna[i] == 'T'){
-        acids[i] = 'A';
+      acids[i] = 'A';
     } 
     //G-C
     else if(dna[i] == 'G'){
-        acids[i] = 'C';
+      acids[i] = 'C';
     }
     //C-G
     else if(dna[i] == 'C'){
-        acids[i] = 'G';
+      acids[i] = 'G';
     }
   }
   for (int v = 0; v < len; v++){
   rna = rna + acids[v];
-  //printf("%d, %s\n", v, acids[v].c_str());
   }
   return rna;
 }
 
-//RNA(5'->3') => łańcuch białkowy
-string translation(string rna){
-  //UUU, UUC, UUA -> fenyloalanina
-  //UUG, CUU, CUC, CUA, CUG -> leucyna
-  //AUU, AUC, AUA -> izoleucyna
-  //AUG -> START metionina
-  //GUU, GUC, GUA, GUG -> walina
-  //UCU, UCC, UCA, UCG, AGU, AGC -> seryna
-  //CCU, CCC, CCA, CCG -> prolina
-  //ACU, ACC, ACA, ACG -> treonina
-  //GCU, GCC, GCA, GCG -> alanina
-  //UAU, UAC -> tyrozyna
-  //UAA, UAG, UGA -> STOP
-  //CAU, CAC -> histydyna
-  //CAA, CAG -> glutamina
-  //AAU, AAC -> asparagina
-  //AAA, AAG -> lizyna
-  //GAU, GAC -> kwas asparaginowy
-  //GAA, GAG -> kwas glutaminowy
-  //UGU, UGC -> cysteina
-  //UGG -> tryptofan 
-  //CGU, CGC, CGA, CGG, AGA, AGG -> arginina
-  //GGU, GGC, GGA, GGG -> glicyna
-  string chain;
-  if (rna.length()%3 == 1){
-    rna.pop_back();
+//SPLICING
+string splicing(string rna){
+  string spliced_rna;
+  regex intron("GU.*?AG");
+  if (regex_search(rna, intron)){
+    spliced_rna = regex_replace(rna, intron, "");
   }
-  else if (rna.length()%3 == 2){
-    rna.pop_back();
-    rna.pop_back();
-  }
+  return spliced_rna;
+}
 
-  int len = rna.length()/3;
+//TRANSLACJA (RNA -> łańcuch białkowy)
+string translation(string rna){
+  string chain;
+
+  int len = rna.length();
   vector<string> aminokwas(len);
   
-  #pragma omp parallel for //num_threads(100)
-  for(int i = 0; i < rna.length(); i=i+3){
+  for(int i = 0; i < len; i=i+3){
 
-    //int t = omp_get_thread_num();
-    //printf("Hello from thread %d\n", t);
-    
     string code = rna.substr(i, 3);
-    string amino;
+
     //fenyloalanina
     if(code == "UUU" || code == "UUC" || code == "UUA"){
-      amino =  "fenyloalanina-";
+      aminokwas[i] =  "fenyloalanina-";
     }
     //leucyna
     else if(code == "UUG" || code == "CUU" || code == "CUC" || code == "CUA" || code == "CUG"){
-      amino =  "leucyna-";
+      aminokwas[i] =  "leucyna-";
     }
     //izoleucyna
     else if(code == "AUU" || code == "AUC" || code == "AUA"){
-      amino =  "izoleucyna-";
+      aminokwas[i] =  "izoleucyna-";
     }
     //metionina
     else if(code == "AUG"){
-      amino =  "(START)metionina-";
+      aminokwas[i] =  "(START)metionina-";
     }
     //walina
     else if(code == "GUU" || code == "GUC" || code == "GUA" || code == "GUG"){
-      amino =  "walina-";
+      aminokwas[i] =  "walina-";
     }
     //seryna
     else if(code == "UCU" || code == "UCC" || code == "UCA" || code == "UCG" || code == "AGU" || code == "AGC"){
-      amino =  "seryna-";
+      aminokwas[i] =  "seryna-";
     }
     //prolina
     else if(code == "CCU" || code == "CCC" || code == "CCA" || code == "CCG"){
-      amino =  "prolina-";
+      aminokwas[i] =  "prolina-";
     }
     //treonina
     else if(code == "ACU" || code == "ACC" || code == "ACA" || code == "ACG"){
-      amino =  "treonina-";
+      aminokwas[i] =  "treonina-";
     }
     //alanina
     else if(code == "GCU" || code == "GCC" || code == "GCA" || code == "GCG"){
-      amino =  "alanina-";
+      aminokwas[i] =  "alanina-";
     }
     //tyrozyna
     else if(code == "UAU" || code == "UAC"){
-      amino =  "tyrozyna-";
+      aminokwas[i] =  "tyrozyna-";
     }
     //STOP
     else if(code == "UAA" || code == "UAG" || code == "UGA"){
-      amino = "STOP";
+      aminokwas[i] = "STOP";
     }
     //histydyna
     else if(code == "CAU" || code == "CAC"){
-      amino =  "histydyna-";
+      aminokwas[i] =  "histydyna-";
     }
     //glutamina
     else if(code == "CAA" || code == "CAG"){
-      amino =  "glutamina-";
+      aminokwas[i] =  "glutamina-";
     }
     //asparagina
     else if(code == "AAU" || code == "AAC"){
-      amino =  "asparagina-";
+      aminokwas[i] =  "asparagina-";
     }
     //lizyna
     else if(code == "AAA" || code == "AAG"){
-      amino =  "lizyna-";
+      aminokwas[i] =  "lizyna-";
     }
     //kwas asparginowy
     else if(code == "GAU" || code == "GAC"){
-        amino =  "kwas asparginowy-";
+      aminokwas[i] =  "kwas asparginowy-";
     }
     //kwas glutaminowy
     else if(code == "GAA" || code == "GAG"){
-      amino =  "kwas glutaminowy-";
+      aminokwas[i] =  "kwas glutaminowy-";
     }
     //cysteina
     else if(code == "UGU" || code == "UGC"){
-      amino =  "cysteina-";
+      aminokwas[i] =  "cysteina-";
     }
     //tryptofan
     else if(code == "UGG"){
-      amino = "tryptofan-";
+      aminokwas[i] = "tryptofan-";
     }
     //arginina
     else if(code == "CGU" || code == "CGC" || code == "CGA" || code == "CGG" || code == "AGA" || code == "AGG"){
-      amino = "arginina-";
+      aminokwas[i] = "arginina-";
     }
     //glicyna
     else if(code == "GGU" || code == "GGC" || code == "GGA" || code == "GGG"){
-      amino = "glicyna-";
-      //aminokwas[i] = "glicyna";
+      aminokwas[i] = "glicyna-";
     }
     else{
-      amino = "x";
+      aminokwas[i] = "x";
     }
-    aminokwas[i/3] = amino;
-    //printf("%d, %s\n", i, amino.c_str());
   }
   for (int v = 0; v < len; v++){
     chain = chain + aminokwas[v];
   }
-
   return chain;
 }
 
 int main()
 {
-  string line;
-  string trash;
-  ifstream DNAFile("file.txt");
+  string line, info;
+  ifstream DNAFile("100.fasta");
   
   //ignorowanie pierwszej linijki, ponieważ są w niej zapisane dane genomu, a nie sam genom
-  getline (DNAFile, trash);
-  // for(int i = 0; i < trash.length(); i++){
-  //    cout << trash[i];
-  // }
+  getline (DNAFile, info);
 
   //wczytywanie z pliku 
   string dna0, dna;
   while (getline (DNAFile, line)) {
-    dna0 = dna0 + line; //jeżeli będzie odwrócone
-    //dna = line + dna; //jeżeli nie będzie odwrócone
+    dna0 = dna0 + line;
   }
-  //jeżeli będzie odwrócone
   for(char letter: dna0){
       dna.insert(0, string(1, letter));
   }
-  
-  // UAC GGG GGG UAG
-  //tyrozyna - glicyna - stop
+  cout << "DNA: " << dna << '\n';
 
-  //PO POPRAWCE:
-  //DNA: CTACCCCCCGTA
-  //RNA: GAU GGG GGG CAU
-  //A:C T:A C:C G:T
+  //ilość wątków
+  int threads = 4;
 
-  //cout << "DNA:" << dna << '\n';
-
+  //transkrypcja
   string rna;
-  cout << "DNA:" << dna;
-  rna = transcription(dna);
-  cout << "RNA:" << rna << '\n';
+  int length_of_parts = dna.length()/threads;
+  string dna_parts[threads];
+  for (int i = 0; i < threads; i++){
+    if(i < threads - 1){
+      dna_parts[i] = dna.substr(length_of_parts*i, length_of_parts);
+      continue;
+    }
+    dna_parts[i] = dna.substr(length_of_parts*i);
+  }
 
+  auto start_rna = high_resolution_clock::now();
+  #pragma omp parallel for num_threads(threads)
+  for(int i = 0 ; i < threads; i++){
+    dna_parts[i] = transcription(dna_parts[i]);
+  }
+  for(int i = 0; i < threads; i++){
+    rna += dna_parts[i];
+  }
+  auto stop_rna = high_resolution_clock::now();
+  cout << "RNA: " << rna << '\n';
+  auto duration_rna = duration_cast<microseconds>(stop_rna - start_rna);
+
+  //splicing
+  string spliced_rna;
+  spliced_rna = splicing(rna);
+  cout << "Spliced RNA: " << spliced_rna << '\n';
+
+  //translacja
   string chain;
-  chain = translation(rna);
-  cout << chain << '\n';
+  int length_of_rna = spliced_rna.length()/threads;
+  if (length_of_rna%3 == 1){
+    length_of_rna = length_of_rna + 2;    
+  }
+  else if (length_of_rna%3 == 2){
+    length_of_rna = length_of_rna + 1;    
+  }
+  string rna_parts[threads];
+  for (int i = 0; i < threads; i++){
+    if(i < threads - 1){
+      rna_parts[i] = spliced_rna.substr(length_of_rna*i, length_of_rna);
+      continue;
+    }
+    rna_parts[i] = spliced_rna.substr(length_of_rna*i);
+  }
+
+  auto start = high_resolution_clock::now();
+  #pragma omp parallel for num_threads(threads)
+  for(int i = 0 ; i < threads; i++){
+    rna_parts[i] = translation(rna_parts[i]);
+  }
+  for(int i = 0; i < threads; i++){
+    chain += rna_parts[i];
+  }
+  auto stop = high_resolution_clock::now();
+  cout << "Amino acid sequence: " << chain << '\n';
+  auto duration = duration_cast<microseconds>(stop - start);
+  
+  cout << "Time taken by transcription: " << duration_rna.count() << " microseconds" << '\n';
+  cout << "Time taken by translation: " << duration.count() << " microseconds" << '\n';
 
   ofstream result("result.txt");
   result << chain;
   result.close();
-
-  //statystyki--------------------------
-  //1. Jaka zasada najczęściej występuje po danej zasadzie
-  //A T C G
-  vector<int> A = {0, 0, 0, 0};
-  vector<int> T = {0, 0, 0, 0};
-  vector<int> C = {0, 0, 0, 0};
-  vector<int> G = {0, 0, 0, 0};
-  for (int i = 0; i < dna.length(); i++){
-    if (dna[i] == 'A'){
-      if (dna[i+1] == 'A'){
-        A[0] += 1;
-      }
-      else if (dna[i+1] == 'T'){
-        A[1] += 1;
-      }
-      else if (dna[i+1] == 'C'){
-        A[2] += 1;
-      }
-      else if (dna[i+1] == 'G'){
-        A[3] += 1;
-      }
-    }
-    else if (dna[i] == 'T'){
-      if (dna[i+1] == 'A'){
-        T[0] += 1;
-      }
-      else if (dna[i+1] == 'T'){
-        T[1] += 1;
-      }
-      else if (dna[i+1] == 'C'){
-        T[2] += 1;
-      }
-      else if (dna[i+1] == 'G'){
-        T[3] += 1;
-      }
-    }
-    else if (dna[i] == 'C'){
-      if (dna[i+1] == 'A'){
-        C[0] += 1;
-      }
-      else if (dna[i+1] == 'T'){
-        C[1] += 1;
-      }
-      else if (dna[i+1] == 'C'){
-        C[2] += 1;
-      }
-      else if (dna[i+1] == 'G'){
-        C[3] += 1;
-      }
-    }
-    else if (dna[i] == 'G'){
-      if (dna[i+1] == 'A'){
-        G[0] += 1;
-      }
-      else if (dna[i+1] == 'T'){
-        G[1] += 1;
-      }
-      else if (dna[i+1] == 'C'){
-        G[2] += 1;
-      }
-      else if (dna[i+1] == 'G'){
-        G[3] += 1;
-      }
-    }
   }
-  cout << "DNA:" << dna << '\n';
-  for (int i = 0; i < 4; i++){
-    printf("%d", A[i]);
-  }
-  cout << "\n";
-  for (int i = 0; i < 4; i++){
-    printf("%d", T[i]);
-  }
-  cout << "\n";
-  for (int i = 0; i < 4; i++){
-    printf("%d", C[i]);
-  }
-  cout << "\n";
-  for (int i = 0; i < 4; i++){
-    printf("%d", G[i]);
-  }
-  cout << "\n";
-
-  //DNA: CTACCCCCCGTA
-  //A 0010 -> C
-  //T 2000 -> A
-  //C 0150 -> C
-  //G 0100 -> T
-     
-}
-
