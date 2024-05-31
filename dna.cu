@@ -52,7 +52,7 @@ __global__ void transform(char* dna, char* rna, char* result, int length_of_part
 int main()
 {
   string line, info;
-  ifstream DNAFile("80.fasta");
+  ifstream DNAFile("100.fasta");
   
   //ignorowanie pierwszej linijki, ponieważ są w niej zapisane dane genomu, a nie sam genom
   getline (DNAFile, info);
