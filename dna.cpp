@@ -175,7 +175,7 @@ int main()
   for(char letter: dna0){
       dna.insert(0, string(1, letter));
   }
-  cout << "DNA: " << dna << '\n';
+  //cout << "DNA: " << dna << '\n';
 
   //ilość wątków
   int threads = 4;
@@ -201,13 +201,13 @@ int main()
     rna += dna_parts[i];
   }
   auto stop_rna = high_resolution_clock::now();
-  cout << "RNA: " << rna << '\n';
+  //cout << "RNA: " << rna << '\n';
   auto duration_rna = duration_cast<microseconds>(stop_rna - start_rna);
 
   //splicing
   string spliced_rna;
   spliced_rna = splicing(rna);
-  cout << "Spliced RNA: " << spliced_rna << '\n';
+  //cout << "Spliced RNA: " << spliced_rna << '\n';
 
   //translacja
   string chain;
@@ -236,11 +236,11 @@ int main()
     chain += rna_parts[i];
   }
   auto stop = high_resolution_clock::now();
-  cout << "Amino acid sequence: " << chain << '\n';
+  //cout << "Amino acid sequence: " << chain << '\n';
   auto duration = duration_cast<microseconds>(stop - start);
   
-  cout << "Time taken by transcription: " << duration_rna.count() << " microseconds" << '\n';
-  cout << "Time taken by translation: " << duration.count() << " microseconds" << '\n';
+  //cout << "Time taken by transcription: " << duration_rna.count() << " microseconds" << '\n';
+  //cout << "Time taken by translation: " << duration.count() << " microseconds" << '\n';
 
   ofstream result("result.txt");
   result << chain;
