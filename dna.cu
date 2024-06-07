@@ -90,7 +90,7 @@ int main()
   transform<<<1, threads>>>(cudaDNA, cudaRNA, cudaResult, length_of_parts, dna.length(), cudaChain, cudaCode);
   auto stop = high_resolution_clock::now();
   auto duration = duration_cast<microseconds>(stop - start);
-  cout << "Transcription took " << duration.count() << " microseconds." << '\n';
+  //cout << "Transcription took " << duration.count() << " microseconds." << '\n';
 
   cudaFree(cudaDNA);
   free(charredDNA);
